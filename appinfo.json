@@ -1,0 +1,22 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        "location"
+    ],
+    "companyName": "koudac@gmail.com",
+    "longName": "RPIDomo",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "RPIDomo",
+    "targetPlatforms": [
+        "basalt"
+    ],
+    "uuid": "430399fe-1077-4c2e-bf7a-e074139eca38",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
