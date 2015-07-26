@@ -4,6 +4,11 @@ var Username = "koudac";
 var Password = "sxC8U5q6";
 
 const ACTION_MSG = 0x3;
+const DATA_MSG = 0x5;
+
+const CHANGE_STATE = 0x6;
+const REFRESH_STATE = 0x7;
+
 
 function ReadEtatAlarme(){
 
@@ -74,10 +79,25 @@ Pebble.addEventListener("appmessage", function(e) {
 	
 	// Si c'est un message d'action alors...
 	if(msg.MSG_TYPE == ACTION_MSG){
-		console.log('KeyPressed value: ' + msg.PRESSED_KEY );
+		switch(msg.ACTION_ID){
+			case CHANGE_STATE:
+				console.log('KeyPressed value: ' + msg.ACTION_DATA );
 	
-		// Change l'etat de l'alarme
-  	ChangeEtatAlarme(msg.PRESSED_KEY);
+				// Change l'etat de l'alarme
+  			ChangeEtatAlarme(msg.ACTION_DATA);
+				break;
+				
+			case REFRESH_STATE:
+				ReadEtatAlarme();
+				break;
+				
+			default:
+				console.log('Action non géré...');
+				break;
+		} 
+	}
+	else if(msg.MSG_TYPE == DATA_MSG){
+			console.log("data msg non implémenté...");
 	}
 	else console.log("Message non géré...");
 	

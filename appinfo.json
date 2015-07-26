@@ -1,10 +1,14 @@
 {
     "appKeys": {
+        "ACTION_DATA": 8,
+        "ACTION_ID": 1,
         "ACTION_MSG": 3,
+        "CHANGE_STATE": 6,
+        "DATA_MSG": 5,
         "ETAT_ALARME_KEY": 0,
         "MSG_TYPE": 4,
-        "PRESSED_KEY": 1,
-        "READ_STATE": 2
+        "READ_STATE": 2,
+        "REFRESH_STATE": 7
     },
     "capabilities": [
         ""

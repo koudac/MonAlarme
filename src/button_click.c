@@ -9,10 +9,14 @@ static TextLayer *s_debugtext;
 	
 enum AlarmeKey {
   ETAT_ALARME_KEY = 0x0,        // TUPLE_INT
-	PRESSED_KEY = 0x1,						// TUPLE_INT	
+	ACTION_ID = 0x1,							// TUPLE_INT	
 	READ_STATE = 0x2,							// TUPLE_INT
 	ACTION_MSG = 0x3,							// TUPLE_INT
-	MSG_TYPE = 0x4								// TUPLE_INT
+	MSG_TYPE = 0x4,								// TUPLE_INT
+	DATA_MSG = 0x5,
+  CHANGE_STATE = 0x6,
+	REFRESH_STATE = 0x7,
+	ACTION_DATA = 0x8
 };
 
 static AppSync s_sync;
@@ -34,7 +38,7 @@ static void data_handler(AccelData *data, uint32_t num_samples) {
   //console.log( s_buffer);
 }
 
-static void Send_Action_To_JS(int ActionID, int ActionValue){
+static void Send_Action_To_JS(int ID_Action, int DataValue){
   DictionaryIterator *iter;
   app_message_outbox_begin(&iter);
 
@@ -48,7 +52,8 @@ static void Send_Action_To_JS(int ActionID, int ActionValue){
 	
 	// Ajout des valeurs de l'action a envoyer dans le dictionnaire
 	dict_write_int(iter, MSG_TYPE, &Msg_Type_Value, sizeof(int), true);
-  dict_write_int(iter, ActionID, &ActionValue, sizeof(int), true);
+  dict_write_int(iter, ACTION_ID, &ID_Action, sizeof(int), true);
+	dict_write_int(iter, ACTION_DATA, &DataValue, sizeof(int), true);
   dict_write_end(iter);
 
   app_message_outbox_send();
@@ -85,9 +90,10 @@ static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tup
 					text_layer_set_text(bp_activer, "Activer");	
   				text_layer_set_text_color(bp_desactiver, GColorRed);
   				text_layer_set_text(bp_desactiver, "-> Désactiver <-");
-			}else {
-					text_layer_set_text(s_debugtext, new_tuple->value->cstring);
-			} 
+			}
+		  /*else {
+					//text_layer_set_text(s_debugtext, new_tuple->value->cstring);
+			}*/
 		
       break;
 		
@@ -99,21 +105,21 @@ static void sync_tuple_changed_callback(const uint32_t key, const Tuple* new_tup
 
 static void request_etat_alarme(void) {
 	// Demande au JS un refresh de l'etat de l'alarme affiché
-	Send_Action_To_JS(READ_STATE,0);
+	Send_Action_To_JS(REFRESH_STATE, 0);
 }
 
 static void passage_click_handler(ClickRecognizerRef recognizer, void *context) {
-	Send_Action_To_JS(PRESSED_KEY,3);
+	Send_Action_To_JS(CHANGE_STATE,3);
 	request_etat_alarme();
 }
 
 static void activer_click_handler(ClickRecognizerRef recognizer, void *context) {
-	Send_Action_To_JS(PRESSED_KEY,1);
+	Send_Action_To_JS(CHANGE_STATE,1);
 	request_etat_alarme();
 }
 
 static void desactiver_click_handler(ClickRecognizerRef recognizer, void *context) {
-	Send_Action_To_JS(PRESSED_KEY,2);
+	Send_Action_To_JS(CHANGE_STATE,2);
 	request_etat_alarme();
 }
 
@@ -163,7 +169,7 @@ static void window_unload(Window *window) {
 }
 
 static void tap_handler(AccelAxisType axis, int32_t direction) {
-  switch (axis) {
+  /*switch (axis) {
   case ACCEL_AXIS_X:
     if (direction > 0) {
       text_layer_set_text(s_debugtext, "X axis positive.");
@@ -185,10 +191,10 @@ static void tap_handler(AccelAxisType axis, int32_t direction) {
       text_layer_set_text(s_debugtext, "Z axis negative.");
     }
     break;
-  }
+  }*/
 	
 	// Mise a jour de l'etat de l'alarme affiché
-	//request_etat_alarme();
+	request_etat_alarme();
 }
 
 static void init(void) {
@@ -207,11 +213,11 @@ static void init(void) {
     accel_tap_service_subscribe(tap_handler);
   } else {
     // Subscribe to the accelerometer data service
-    int num_samples = 3;
+    int num_samples = 20;
     accel_data_service_subscribe(num_samples, data_handler);
 
     // Choose update rate
-    accel_service_set_sampling_rate(ACCEL_SAMPLING_10HZ);
+    accel_service_set_sampling_rate(ACCEL_SAMPLING_100HZ);
   }
 	
 	app_message_open(64, 64);
