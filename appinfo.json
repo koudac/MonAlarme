@@ -1,16 +1,22 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "ACTION_MSG": 3,
+        "ETAT_ALARME_KEY": 0,
+        "MSG_TYPE": 4,
+        "PRESSED_KEY": 1,
+        "READ_STATE": 2
+    },
     "capabilities": [
-        "location"
+        ""
     ],
     "companyName": "koudac@gmail.com",
-    "longName": "RPIDomo",
+    "longName": "Mon Alarme",
     "projectType": "native",
     "resources": {
         "media": []
     },
     "sdkVersion": "3",
-    "shortName": "RPIDomo",
+    "shortName": "Mon Alarme",
     "targetPlatforms": [
         "basalt"
     ],

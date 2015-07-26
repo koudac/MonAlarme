@@ -1,43 +1,60 @@
 // Definition des variables de la watchapp
-var EtatAlarme = -1;
+var EtatAlarme = 0;
 var Username = "koudac";
-var Passaword = "geraldouc";
+var Password = "sxC8U5q6";
 
-function iconFromWeatherId(weatherId) {
-  if (weatherId < 11) {
-    return 1;
-  } else if (weatherId < 26) {
-    return 2;
-  } else if (weatherId > 25){
-    return 3;
-  } 
-}
+const ACTION_MSG = 0x3;
 
-function fetchWeather(latitude, longitude) {
-  var req = new XMLHttpRequest();
-  req.open('GET', "http://api.openweathermap.org/data/2.5/station?id=6792&cnt=1", true); // +
-  //  "lat=" + latitude + "&lon=" + longitude + "&cnt=1", true);
+function ReadEtatAlarme(){
+
+	var req = new XMLHttpRequest();
+	req.withCredentials = true;
+	req.open('GET', "http://bureau.runasyst.fr:3500/RpiWebServeur/GetEtatAlarme.php", true);
+	req.setRequestHeader("Authorization", "Basic "+ Base64.encode(Username +":" + Password));
+	
   req.onload = function(e) {
     if (req.readyState == 4) {
       if(req.status == 200) {
-        console.log(req.responseText);
+        //console.log(req.responseText);
 
-        var response = JSON.parse(req.responseText);
-        var temperature = Math.round(response.last.main.temp - 273.15);
-				var windSpeed = Math.round(response.last.wind.speed*3.6);
-        var icon = iconFromWeatherId(windSpeed);
-        var city = "Club Modeliste du sud";
-        console.log(temperature);
-				console.log(windSpeed);
-        console.log(icon);
-        console.log(city);
-        Pebble.sendAppMessage({
-          "WEATHER_ICON_KEY":icon,
-          "WEATHER_TEMPERATURE_KEY":" " + temperature + "\u00B0C",
-					"WEATHER_WIND_KEY":  windSpeed + " Km/h ",
-          "WEATHER_CITY_KEY":city}
-        );
+				// Stock l'etat recu dans la variable EtatAlarme
+        EtatAlarme = req.responseText;
+				
+				console.log("Lecture de l'etat de l'alarme ("+ EtatAlarme +")");
+				
+				// Envoie la nouvelle valeur de l'etat de l'alarme au prog en C
+        Pebble.sendAppMessage({"ETAT_ALARME_KEY":EtatAlarme});
 
+      } else {
+        console.log("Error");
+      }
+    }
+  }
+  req.send(null);
+	
+}
+
+function ChangeEtatAlarme(NewEtatAlarme){
+	console.log("Modification de l'etat de l'alarme ("+ NewEtatAlarme +")");
+	
+	var EtatAlarmeText = "passage";
+	if(NewEtatAlarme == 3 ) EtatAlarmeText = "passage";
+	else if(NewEtatAlarme == 2 ) EtatAlarmeText = "off";
+	else if(NewEtatAlarme == 1 ) EtatAlarmeText = "on";
+	
+	var req = new XMLHttpRequest();
+	req.withCredentials = true;
+	req.open('GET', "http://bureau.runasyst.fr:3500/RpiWebServeur/ChangeAlarmState.php?Etat="+EtatAlarmeText, true);
+	req.setRequestHeader("Authorization", "Basic "+ Base64.encode(Username +":" + Password));
+	
+	req.onload = function(e) {
+    if (req.readyState == 4) {
+      if(req.status == 200) {
+
+				console.log("Etat modifier correctement...");
+
+				ReadEtatAlarme();
+				
       } else {
         console.log("Error");
       }
@@ -46,41 +63,24 @@ function fetchWeather(latitude, longitude) {
   req.send(null);
 }
 
-function locationSuccess(pos) {
-  var coordinates = pos.coords;
-  fetchWeather(coordinates.latitude, coordinates.longitude);
-}
-
-function locationError(err) {
-  console.warn('location error (' + err.code + '): ' + err.message);
-  Pebble.sendAppMessage({
-    "WEATHER_CITY_KEY":"Loc Unavailable",
-    "WEATHER_TEMPERATURE_KEY":"N/A"
-  });
-}
-
-var locationOptions = { "timeout": 15000, "maximumAge": 60000 }; 
-
-function ReadEtatAlarme(){
-	console.log("Lecture de l'etat de l'alarme ("+ EtatAlarme +")")
-	
-}
-
-function ChangeEtatAlarme(NewEtatAlarme){
-	console.log("Modification de l'etat de l'alarme ("+ NewEtatAlarme +")")
-	
-}
-
 Pebble.addEventListener("ready", function(e) {
   console.log("connect!" + e.ready);
 	EtatAlarme = ReadEtatAlarme();
-	console.log(e.type);
 });
 
 Pebble.addEventListener("appmessage", function(e) {
-  console.log(e.type);
-  console.log(e.payload.temperature);
-  console.log("message!");
+	var msg = JSON.parse(JSON.stringify(e.payload));
+	console.log('Received message: ' + JSON.stringify(e.payload));
+	
+	// Si c'est un message d'action alors...
+	if(msg.MSG_TYPE == ACTION_MSG){
+		console.log('KeyPressed value: ' + msg.PRESSED_KEY );
+	
+		// Change l'etat de l'alarme
+  	ChangeEtatAlarme(msg.PRESSED_KEY);
+	}
+	else console.log("Message non géré...");
+	
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
